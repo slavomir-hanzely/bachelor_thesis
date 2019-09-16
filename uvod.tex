@@ -1,0 +1,19 @@
+\chapter*{Úvod} % chapter* je necislovana kapitola
+\addcontentsline{toc}{chapter}{Úvod} % rucne pridanie do obsahu
+\markboth{Úvod}{Úvod} % vyriesenie hlaviciek
+
+V rámci tejto práce sa budeme zaoberať metódami na generovanie z rovnomerného rozdelenia vo veľarozmernom polyédri (konvexnom mnohostene). Rovnomernosť rozdelenia znamená, že pravdepodobnosť, že pri generovaní dostaneme bod vnútri ľubovoľnej oblasti polyédra, je lineárne závislá iba od objemu danej oblasti. Predstavíme si známe algoritmy z tried Markov Chain Monte Carlo a zamietacích metód, ktoré možno použiť na rovnomerné generovanie a ako ich špeciálny prípad generovanie v polyédri. 
+
+Vo všeobecnosti možno polyéder reprezentovať viacerými spôsobmi, napríklad ako konvexný obal bodov (V--reprezentácia) alebo ako sústavu lineárnych nerovníc (H--reprezentácia). Obidve spomenuté reprezentácie možno v prípade potreby previesť na tú druhú. Prevod medzi nimi síce nie je jednoduchý, no daný výpočet je nutné spraviť len raz pred začatím generovania. 
+
+Rovnomerné generovanie bodu v polyédri je problém s prirodzeným uplatnením v praxi. Mnoho algoritmov, napríklad z triedy Monte Carlo alebo z triedy znáhodnených optimalizačných metód, je závislých na rovnomernom generovaní bodov splňujúcich určité požiadavky.
+Generovanie bodov v polyédri možno vnímať ako generovanie bodov, ktoré spľňajú sústavu lineárnych obmedzení H--reprezentácie polyédru.
+
+Cieľom tejto práce je jednak poskytnúť prehľad známych metód, ktoré je možné použiť na rovnomerné generovanie v polyédroch a na základe porovnania implementovať čo najefektívnejší generátor.
+
+V prvej kapitole sa budeme zaoberať známymi metódami, ktoré možno použiť na generovanie na polyédroch. Medzi ne patria Metropolis--Hastings metódy (z triedy Markov Chain Monte Carlo), ktoré sa snažia simulovať realizácie z komplexných rozdelení vhodne konštruovanou ``náhodnou prechádzkou''. To možno použiť aj v našom prípade, keď je cielené rozdelenie uniformné. V triede Metropolis--Hastings metód sa špecificky zameriame na Hit--and--Run generátor a Gibbsov generátor, ktoré možno jednoducho implementovať práve pre generovanie na mnohorozmerných polyédroch.
+Okrem toho sa budeme zaoberať aj zamietacími metódami, ktoré namiesto generovania bodov priamo v polyédri vygeneruju bod na jednoduchšej nadmnožine polyédra rovnomerne náhodne. Po vygenerovaní bodu overia, či leží v polyédri. Ak neležia, tak generujú znovu.
+
+Druhá kapitola je venovaná problému optimálneho návrhu experimentov (optimal design problem), pomocou ktorého predstavíme algoritmus Randomized Exchange Algorithm. Daný algoritmus vieme použiť aj na nájdenie elipsoidu s minimálnym objemom, obaľujúci zadaný polyéder. Tento elipsoid možno jednak priamo použiť ako nadmnožinu pri zamietacej metóde, no taktiež možno jeho vlastnosti využiť na zistenie natočenia polyédra v priestore a obalenie polyédra kvádrom s malým objemom.
+
+Tretia kapitola obsahuje technické podrobnosti implementácie, výsledky porovnaní algoritmov spomenutých v prvej kapitole a zdrojový kód čo najrýchlejšieho algoritmu na generovanie bodov vnútri polyédru.

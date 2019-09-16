@@ -1,0 +1,48 @@
+\chapter*{Záver}  % chapter* je necislovana kapitola
+\addcontentsline{toc}{chapter}{Záver} % rucne pridanie do obsahu
+\markboth{Záver}{Záver} % vyriesenie hlaviciek
+
+V rámci tejto práci sa nám podarilo splniť všetky stanovené ciele. Dokonca sme mali čas venovať sa aj súvisiacim oblastiam, ktoré nie sú priamo nutné pre túto prácu. Menovite to boli problém optimálneho návrhu, náhodné polyédre, vzájomné odhady veľkostí H--reprezentácie a V--reprezentácie.
+
+\section{Prínos práce}
+V kapitole $1$ sme vytvorili prehľad existujúcich metód na generovanie bodov z rovnomerného rozdelenia v polyédri.
+
+Popísali sme triedu Metropolis--Hasting metód. Predstavili sme všeobecný Metropolis--Hasting generátor a jeho konkrétne realizácie Hit--and--run generátor a Gibbsov generátor ako známe algoritmy.
+
+Taktiež sme sa venovali zamietacím metódam, ukázali sme, že spomedzi prípustných nadmnožín polyédra, výber kvádra s hranami rovnobežnými s osami sústavy môže viesť k ľubovoľne veľkému očakávanému počtu generovaní. Okrem toho sme ukázali, že MVEE je lepšia nadmnožina polyédra na generovanie zamietaciou metódou ako kváder bez obmedzení na natočenie v priestore. Pomocou Johnovho elipsoidu sme spravili horný odhad $d^d$ očakávaného počtu generovaní (kde $d$ je počet rozmerov priestoru), kým nájdeme bod v polyédri. Taktiež sme vymysleli zrýchlenú verziu MVEE metódy, ktorá overuje príslušnosť vygenerovaných bodov v polyédri ešte pred zobrazením z jednotkovej gule do MVEE.\\
+
+Okrem metód na generovanie bodov v polyédri sme sa v kapitole $2$ zaoberali problémom optimálneho návrhu. Podľa článku \cite{rex_harman} sme predstavili samotný problém a stručne predstavili algoritmy SAM, VEM, REX na riešenie problému optimálneho návrhu. Tiež sme podľa \cite{rex_harman} ukázali čítateľovi súvis D--optimálneho návrhu a nájdenia MVEE pre daný polyéder.\\
+
+Na záver sme v kapitole $3$ popísali testovanie metód a výsledky testovania. V rámci implementácie testovača sme zaoberali výberom polyédrov, na ktorých budú algoritmy testované. Nakoľko sme chceli zvoliť náhodné polyédre, v rámci diskusie o náhodnosti polyédrov sme ukázali, že už samotné poriadne formálne definovanie ``náhodného'' polyéhru je zaujímavé.
+
+Metódy boli testované na náhodných polyédroch vygenerovaním veľkého počtu bodov. Nakoľko pri veľkom počte vygenerovaných bodov vierohodnosť vygenerovanéch rozdelení všetkých metód je vysoká, ako najdôležitejší ukazovateľ sme porovnávali rýchlosť generovania.
+Ukázali sme, že čas potrebný na vygenerovanie veľkého počtu bodov pomocou Metropolis--Hastings metód je so zväčšujúcim sa počtom rozmerov asymptoticky menší ako pri všetkých nami uvažovaných zamietacích metódach. Celkovo najrýchlejší generátor bol Hit--and--Run generátor.
+
+Praktickým testovaním sme ukázali, že pre počet rozmerov do $10$, s rastúcim počtom rozmerov rastie pomer $\frac{\lambda(T_{MVEE})}{\lambda(S)}$ aspoň exponenciálne, preto na prvý pohľad úplne voľný horný odhad $d^d$ môže byť do určitej miery tesný.\\
+
+\section{Vplyv implementačných volieb}
+
+V tejto podkapitole odôvodníme niekoľko implementačných rozhodnutí, ktoré sme na začiatku spravili a ich dopad na prácu.\\
+
+\textbf{Výber jazyka:} Jazyk Julia bol zvolený najmä kvôli rýchlosti výpočtov a prehľadnosti zdrojového kódu. Napriek týmto výhodám, počas implementácie testovača bolo potrebné vyriešiť niekoľko chýb spôsobených nedostatočnou a neaktuálnou dokumentáciou jazyka. Taktiež implementácia jednotlivých algoritmov nám trvala oveľa dlhšie ako sa pôvodne očakávalo. Obzvlášť pri prepisovaní implementácie algoritmu REX z jazyka R \cite{rex_harman} sme narazili na niekoľko nepríjemností spôsobených nedostatočnou znalosťou jazyka R.
+
+Po úspešnej implementácii trvali niektoré výpočty viac ako pätnásť hodín. Vzhľadom na rýchlosť jazyka Julia predpokladáme, že v iných jazykoch (napríklad v jazyku R) by dané výpočty trvali omnoho dlhšie. Preto považujeme jazyk Julia za vhodnú voľbu.
+
+\textbf{Voľba definície polyédrov:} V rámci práce sme si zvolili definíciu polyédrov v H--reprezentácii ako $\{ \mathbf x \; | \; A \mathbf x \geq b \}$. Táto voľba bola vcelku nešťastná, nakoľko všetky algoritmy, s ktorými sme pracovali používali ekvivalentnú definíciu $\{ \mathbf x \; | \; A \mathbf x \leq b \}$. Touto voľbou bolo potrebné prepisovať jednotlivé vzorce Hit--and--Run generátora, Gibbsovho generátora, generovania polyédrov, čo vytvorilo priestor na výskyt chýb.
+
+\section{Možné rozšírenia práce}
+
+Vzhľadom k obmedzenému časovému rámcu nebolo možné venovať sa všetkým súvisiacim oblastiam do hĺbky. V tejto podkapitole si uvedieme niekoľko možných smerov, ako by sa dala daná práca rozšíriť.\\
+
+Uvádzané algoritmy boli testované na náhodných polyédroch. Ako možné rozšírenia práce prichádza do úvahy testovať spomínané algoritmy na iných polyédrov. Pri nahradení náhodných polyédrov polyédrami z nejakej konkrétnej triedy prakticky relevantných polyédrov by bolo možné získať iné výsledky. 
+
+Ako súvisiace rozšírenie sa núka predefinovanie náhodných polyédrov. Generovanie polyédrov vo V--reprezentácii iným spôsobom, s následným prevodom do H--reprezentácie podľa nášho názoru nebude viesť k inému výsledku. Avšak vygenerovanie polyédra vo V--reprezentácii a následný prevod do H--reprezentácie bude pravdepodobne viesť ku triede polyédrov odlišnej od triedy nami použitých náhodných polyédrov. Daná trieda polyédrov by teoreticky mohla obsahovať polyédre, ku ktorým prislúchajú pomerovo menšie MVEE a teda MVEE metóda by mohla byť rýchlejšia ako pri našej implementácii náhodných polyédrov.\\
+
+Ako ďalšie rozšírenie (spomenuté pri generovaní polyédrov, viď \ref{2-generatory}) možno, namiesto prevádzania polyédrov z jednej reprezentácie do druhej, hľadať dvojicu generátorov z rovnakého rozdelenia polyédrov, pričom jeden generuje polyédre v H--reprezentácii a druhý vo V--reprezentácii. Týmto by bolo možné získať inú triedu náhodných polyédrov, ktorá by mohla viesť k iným výsledkom testovania.
+
+
+
+
+
+
+

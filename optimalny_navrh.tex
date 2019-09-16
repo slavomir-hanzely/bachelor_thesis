@@ -1,0 +1,74 @@
+\chapter{Metódy na riešenie problému optimálneho návrhu}
+
+V tejto kapitole si predstavíme Randomized exchange algoritmus \cite{rex_harman} (ďalej REX) ako metódu na riešenie problému optimálneho návrhu (optimal design problem). Táto kapitola je čerpaná z článku \cite{rex_harman}. \\
+
+Cieľom problému optimálneho návrh je nájsť návrh minimalizujúci kritérium optimality. Pri návrhoch experimentov to zodpovedá nájdeniu návrhu experimentov minimalizujúceho rozptyl odhadu parameterov použitého štatistického modelu.
+
+Vďaka ekvivalencii problému $D$--optimálneho návrhu a minimum volume enclosing elipsoidu (MVEE) možno optimálny návrh vhodného modelu experimentov využiť aj na riešenie MVEE problému. Ak vrcholy polyédra $P$ vo V--reprezentácii stotožníme s lineárnymi regressormi v probléme $D$--optimálneho návrhu, z riešenia $D$--optimálneho návrhu pre dané regressory môžno vypočítať MVEE elipsoid prislúchajúci k polyédru $P$.\\
+
+Zaveďme si označenia využívané pri probléme optimálneho návrhu. Označme si množinu zvolených bodov návrhov $\mathfrak X$.
+Označme návrh ako $n$--rozmerný vektor $\mathbf{w}$ s nezápornými prvkami so súčtom $1$. Pri probléme optimálneho návrhu, komponent $w_x$ vektoru $\mathbf{w}$ predstavuje počet pokusov v bode $x \in \mathfrak X$.
+Označme si $\mathbf{f}(x)\in \mathbb{R}^m$ lineárny regresor prislúchajúci ku $x$. Predpokladajme, že model je nesingulárny v zmysle, že $\{ \mathbf f(x)|x \in \mathfrak X \}$ generuje $\mathbb R^m$.
+Označme nosič návrhu $\mathbf{w}$ ako $\text{supp}(\mathbf{w})=\{x \in \mathfrak{X}| w_x>0\}$. 
+Množina všetkých návrhov tvorí pravdepodobnostný simplex v $\mathbb{R}^m$, označme ju $\Xi$ (je kompaktná a konvexná).
+Označme si $\mathbf{M(w)}$ informačnú maticu prislúchajúcu k návrhu $\mathbf w$, platí $$\mathbf{M(w)}=\sum_{x\in \mathfrak X}w_x \mathbf{f}(x)\mathbf{f'}(x).$$
+Taktiež si označme vektor výchyliek $\mathbf w$ ako $\mathbf {d(w)}$, v pozorovanom bode $x$ má hodnotu $$d_x(\mathbf w)=\mathbf {f'}(x)\mathbf M^{-1}(\mathbf w)\mathbf f(x), x \in \mathfrak X.$$ Z predpokladu, že model je nesingulárny vyplýva, že $\mathbf M^{-1}(\mathbf w)$ existuje.
+Ďalej si označme $\Phi_D: S^m_+ \rightarrow \mathbb{R}$, kritérium $D$--optimality, $$\Phi_D(\mathbf{w})=\det(\mathbf{M})^{1/n}.$$
+Cieľom probému optimálneho návrhu je maximalizovať $\Phi_D(\mathbf{M(w)})$ vzhľadom na $\mathbf w$, t.j. nájsť optimálny návrh $$\mathbf{w^*} = \argmax_{\mathbf{w} \in \Xi} \in \{\Phi_D(\mathbf{M(w)})\}.$$ Podľa \cite{rex_harman}, pre verziu $D$--optimality $\Psi$ splňujúcu $\Psi(\mathbf M)= \text{log det}(\mathbf M)$ platí, že $$d_x(\mathbf w)= \lim_{\alpha \rightarrow 0_+} \frac{\Psi[(1-\alpha)\mathbf{M(w)}+\alpha\mathbf M(\mathbf e_x)]-\Psi\mathbf(M(w))}{\alpha}+n,$$ kde $\mathbf e_x$ je singulárny návrh v $x$. Z tohoto tvaru vidno, že pri iteratívnom spôsobe rátania $D$--optimality možno použiť $\mathbf d$ na určenie smeru, v ktorom hľadať ďalší návrh.
+
+Pre polyéder v H--reprezentácii zadaný bodmi $\{ \mathbf{z_1, \dots, z_n} \}$ ($\mathbf{z_i} \in \mathbb{R}^d$ pre $i=1,\dots, n$) je možno MVEE vypočítať ako $$P(\mathbf{\overline H, \overline z})= \{ \mathbf{z} \in \mathbb{R}^d | (\mathbf{z-\overline z)'\overline H(z-\overline z}) \le 1 \}, $$ kde $\mathbf{\overline z}=\sum_{i=1}^n w_i^*\mathbf{z_i}$, $\mathbf{\overline H}=\frac{1}{m-1} \left[ \sum_{i=1}^n w_i^*\mathbf{(z_i-\overline z)(z_i-\overline z)'} \right]^{-1} $, pričom $\mathbf{w^*}$ je $D$--optimálny návrh pre regressory $\mathbf{f}_i=(1,\mathbf{z_i}')'$ pre $i=1,\dots, n$.\\
+
+Vzhľadom na dôležitosť MVEE elipsoidu pre túto prácu a kvôli lepšiemu pochopeniu REX algoritmu sa najprv pozrieme na jednoduchšie metódy riešenia problému optimálneho návrhu.
+
+\section[Základné algoritmické metódy]{Základné algoritmické metódy na riešenie\\ problému optimálneho návrhu}
+%\section[this is a very long title I want to break manually]{this is a very long title I\\ want to break manually}
+
+Najprv si predstavíme metódu Subspace Ascend Method (ďalej SAM) ako všeobecnú iteratívnu metódu na riešenie problému optimálneho návrhu a Vertex Exchange Method (VEM) ako jej konkrétnu realizáciu. Následne sa pozrieme na REX algoritmus ako na špeciálny prípad SAM, ktorý kombinuje VEM metódu s pažravým prístupom.
+
+\subsection{Subspace Ascent Method}
+
+SAM algoritmus postupuje iteratívne. V každej iterácii si vyberie podpriestor v ktorom sa bude hýbať a následne spraví optimálny krok v danom podpriestore:
+
+\begin{algorithm}[H]
+	\caption{Subspace Ascent Method (SAM) \cite{rex_harman}}
+	\label{sam}
+	\begin{algorithmic}[1]
+		\State Zvoľ regulárny $n$ rozmený návrh $\mathbf w^{(0)}$
+		\While {$\mathbf w^{(k)}$ nespĺňa podmienky zastavenia}
+			\State Zvoľ podmnožinu bodov $S_k \subset \mathfrak X$
+			\State Nájdi aktívny podpriestor $\Xi$ ako $\Xi_k \leftarrow \{ \mathbf w \in \Xi | \forall x \not \in S_k, w_x = w_x^{(k)} \}$
+			\State Vypočítaj $\mathbf w^{(k+1)}$ ako riešenie $\max_{\mathbf w \in \Xi_k} \Phi_D(\mathbf{M(w)})$
+			\State Nastav $k \leftarrow k+1$
+		\EndWhile
+		\State Vráť $\mathbf w$
+	\end{algorithmic}
+\end{algorithm}
+
+Pozrime sa na to, ako sa bude meniť hodnota cieľovej funkcie D--optimality $\Phi_D(\mathbf{M(w}^{(k)}))$. SAM algoritmus v kroku ako ďalší návrh zvolí $\mathbf w^{(k+1)} = \max_{\mathbf w \in \Xi_k} \Phi_D(\mathbf{M(w)})$ (krok $5$).
+Nakoľko $\mathbf w^{(k)} \in \Xi_k$, nový návrh spĺňa $\Phi_D(\mathbf {M(w}^{(k+1)})) \geq \Phi_D(\mathbf{M(w}^{(k)}))$. Preto je postupnosť hodnôt $\Phi_D(\mathbf{M(w}^{(k)}))$ neklesajúca, preto žiadnym krokom nezhoršíme hodnotu cieľovej funkcie.
+
+V kroku $5$ nie je nutné presne dopočítať optimálne riešenie v podpriestore, stačí rýchlo nájsť zlepšujúce riešenie a v ďalšom kroku zmeniť aktívny podpriestor.
+
+\subsection{Vertex Exchange Method}
+
+Algoritmus VEM možno vnímať ako konkrétnu realizáciu SAM algoritmu. Postupuje taktiež iteratívne, v jednom kroku z návrhu $\mathbf w$ nájde index $k$ minimalizujúci supp$(\mathbf w)$, $l$ minimalizujúci $\mathfrak X$. Ako ďalší návrh $\mathbf {w'}$ zvolí návrh z úsečky $[w_kw_l]$ maximalizujúci $\Phi_D(\mathbf {M(w')})$.
+
+\begin{algorithm}[H]
+	\caption{Vertex Exchange Method (VEM) \cite{rex_harman}}
+	\label{vem}
+	\begin{algorithmic}[1]
+		\State Zvoľ regulárny $n$ rozmerný návrh $\mathbf w$
+		\While {$\mathbf w$ nespĺňa podmienky zastavenia}
+			\State Vypočítaj $k \leftarrow \argmin_{u \in supp(\mathbf w)} \{ d_u(\mathbf w)\}$
+			\State Vypočítaj $l \leftarrow \argmax_{v \in \mathfrak X} \{ d_v(\mathbf w)\}$
+			\State Vypočítaj $\alpha^* \leftarrow \argmax_{\alpha \in [-w_l, w_k]} \{ \Phi_D (\mathbf M(\mathbf w+\alpha \mathbf e_l -\alpha \mathbf e_k))\}$
+			\State Nastav $w_k \leftarrow w_k - \alpha^*$
+			\State Nastav $w_l \leftarrow w_l + \alpha^*$
+		\EndWhile
+		\State Vráť $\mathbf w$
+	\end{algorithmic}
+\end{algorithm}
+
+Veľkosť optimálneho kroku $\alpha^*$  možno podľa \cite{rex_harman} vyjadriť explicitne. Nech pre $k, l \in \mathfrak X$ platí, že $w_k, w_l$ sú kladné a regresory $\mathbf f(k)$ a $\mathbf f(l)$ nezávislé. Označme si $d_{k,l}=\mathbf {f'}(k) \mathbf M^{-1}\mathbf{(w)f}(l)$. Podľa \cite{rex_harman} pre veľkosť optimálneho kroku do návrhu na úsečke $[w_kw_l]$ platí $$\alpha_{k,l}^*=\text{min} \left( w_k, \text{max} \left(-w_l, \frac{d_k(\mathbf w)-d_l(\mathbf w)}{2[d_k(\mathbf w)d_l(\mathbf w)-d_{k,l}^2(\mathbf w)]} \right) \right).$$\\
+
+Krok VEM algoritmu sa označuje ako leading Bohning exchange (ďalej LBE). Dvojica ($k$, $l$) sa označuje ako pár LBE.

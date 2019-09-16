@@ -1,0 +1,98 @@
+\section{Generovanie polyédrov}
+Metódy boli porovnávané na veľarozmerných polyédroch.
+Nakoľko predpokladáme, že v praxi pri generovaní bodov vnútri polyédrov sa štruktúra polyédrov od problému k problému líši, v rámci tejto práce sme na testovanie algoritmov zvolili množinu polyédrov ako množinu náhodne vygenerovaných polyédrov.
+Týmto sme sa vyhli patologickým prípadom polyédrov.
+
+\subsection{Definícia náhodných polyédrov}
+Zadefinovať náhodný polyéder je samo o sebe ťažký problém. Ako jeden z možných spôsobov definovania prichádza do úvahy definovanie cez V--reprezentáciu polyédru, ako konvexný obal náhodných bodov v priestore. Táto definícia je síce nepresná, no poskytuje návod, ako aj možno takto definovaný polyéder generovať --- vygenerovať množinu bodov V--reprezentácie a následne, v prípade záujmu o zlepšenie efektivity, možno z danej množiny vyhodiť body neležiace na obale polyédra. Nepresnosť spomenutej definície spôsobuje dva zásadné problémy.
+Po prvé, nie je jasné, koľko bodov polyédru je potrebné vygenerovať. Ak sa obmedzíme na vygenerovanie $v$ bodov, tak potom takto nemožno vygenerovať polyédre s viac ako $v$ vrcholmi. Na odstránenie tohoto problému by bolo nutné generovať číslo $v$ z nejakého, pravdepodobne zložitého rozdelenia. 
+Ako druhý, závažnejší problém je, že nemožno generovať body v celom priestore rovnomerne náhodne. Už jednorozmerný prípad je problematický --- nemožno rovnomerne náhodne generovať reálne čísla. To súvisí s tým, že pri rovnomernom generovaní reálnych čísel na $(-\infty, \infty)$ majú všetky intervaly $(a,b)$ nulovú hustotu.\\
+
+Ako iný spôsob, možno definovať náhodný polyéder pomocou H--reprezentácie, ako množinu bodov $x$ splňujúcu množinu náhodných lineárnych obmedzení (nadrovín), pomocou náhodnej matice $A$ a náhodného vektoru $b$. Táto definícia nám tiež dáva návod, ako generovať polyédre. Stačí náhodne vygenerovať lineárne nerovnosti --- maticu $A$ a vektor $b$, polyéder bude množina bodov splňujúce nerovnosť $Ax\geq b$. Podobne ako pri predcházajúcom pokuse o definovanie náhodných polyédrov, aj tu nepresnosti definície spôsobujú problémy. Prvý problém je, že nie je jasné, koľko nerovností je potrebné vygenerovať. Analogicky problému predchádzajúcej definície, ak sa obmedzíme na vygenerovanie $h$ nadrovín, tak potom takto nemožno vygenerovať polyédre s viac ako $h$ stenami.
+Ďalší netriviálny problém je, ako náhodne zvoliť nadroviny. Nadrovina je definovaná otočením (prislúchajúcim riadkom matice $A$) a posunutím od počiatku sústavy (daným prislúchajúcim prvkom vektoru $b$). Na to, aby sme dostali náhodné otočenie nadroviny s rovnakou pravdepodobnosťou, stačí vygenerovať prvky matice $A$ z nezávislých normálnych rozdelení s priemerom $0$ a výchilkou $1$, vďaka rotačnej symetrii normálneho rozdelenia bude každá nadrovina cez počiatok sústavy rovnako pravdepodobná. Avšak náhodne vygenerovať posunutie nadroviny od počiatku sústavy je úloha ekvivalentná rovnomernému vygenerovaniu reálneho čísla. To sa tiež nedá urobiť. Ako ďalší problém tohoto prístupe je, že takto možno vygenerovať prázdny polyéder (množina bodov splňujúcich $Ax \geq b$ môže byť prázdna).
+
+Keďže zameranie práce nie na generovanie polyédrov ako také, ďalej v práci upustíme od formálne presnej definície náhodneho polyédra, uspokojíme sa s menšími nepresnosťami.\\
+
+\subsection{Reprezentácia generovania polyédra}
+Na generovanie bodov pomocou Metropolis--Hastings metód potrebujeme mať polyéder zadaný v H--reprezentácii, no REX algoritmus na nájdenie MVEE elipsoidu potrebuje ako vstup polyéder vo V--reprezentácii. Preto je nutné v rámci generovania vygenerovať polyéder zároveň v H--reprezentácii aj vo V--reprezentácii. Potrebujeme vygenerovať polyéder v jedenej reprezentácii a previesť ho do druhej. Daný prevod nie je súčasťou žiadnej metódy generovania bodov v polyédri, nebude súčasťou nášho generátora. Kedže bude pre každý polyéder spravený len raz, nie je nutné, aby bol rýchly.\\
+
+Ako alternatíva ku generovaniu polyédrov v jednej reprezentácii a prevádzaniu do druhej reprezentácie možno porovnávať metódy aj inak. 
+Predpokladajme, že máme generátor $G_H$ polyédrov v H--reprezentácii a generátor $G_V$ polyédrov vo V--reprezentácii, pričom $G_H$ a $G_V$ generujú z rovnakého rozdelenia polyédrov.
+Ak by sme testovali Metropolis--Hastings metódy na veľkom množstve polyédrov vygenerovaných pomocou $G_H$ a zamietaciu metódu pomocou MVEE elipsoidu na veľkom množstve polyédrov vygenerovaných pomocou $G_V$, výsledky budú podobné ako keby sme spomínané metódy testovali na rovnakých polyédroch.
+Nakoľko nájdenie generátorov $G_H$ a $G_V$ s rovnakým rozdeleným polyédrov je potenciálne ťažší problém (už len zabezpečenie rovnakého rozdelenia obsahov polyédrov je netriviálne), tomuto alternatívnemu prístupu sa v tejto práci venovať nebudeme. \label{2-generatory}\\
+
+Poďme sa zamyslieť, v akej reprezentácii sa nám oplatí generovať polyéder. Teoreticky by mohlo byť možné, že pre nejakú triedu polyédrov je jedna ich reprezentácia exponenciálne väčšia ako ich druhá reprezentácia. T.j., že by mali jednu reprezentáciu veľkosti $n$ a druhú veľkosti $\mathcal O(2^n)$. Polyédre z danej triedy by mohli byť pri testovaní problematické, nakoľko algoritmy využívajúce spomenutú reprezentáciu by boli značne znevýhodnené. Zišlo by sa nám ukázať, že niečo také nemôže nastať, t.j., že možno vzájomne polynomiálne odhadnúť veľkosti reprezentácii.
+
+V prípade trojrozmerných polyédrov to možno dokonca ohraničiť lineárnym faktorom $2$. Kedže topologickú štruktúru trojrozmerného polyédra možno zapísať ako planárny graf, možno jednoducho ukázať, že minimálna množina nerovností (stien) v H--reprezentácii a minimálna množina vrcholov vo V--reprezentácii sú asymptoticky rovnako veľké.
+Presnejšie, medzi počtom stien $F$ a počtom vrcholov $V$ v polyédra platí vzťah $F+V=E-2$ (Eulerová charakteristika), kde $E$ je počet hrán polyédra. Keďže $E$ možno odhadnúť pomocou vzťahu $E \le 3V-6$ (pre $V>2$), platí $F=E-2-V \leq 2V-6$, preto $F \leq 2V-6$. Taktiež, keďže v nedegenerovanom polyédri majú vrcholy stupňe aspoň $3$, $E$ možno odhadnúť pomocou súčtov stupňov vrcholov polyédra ako $E \geq \frac{3}{2}V,$ z čoho získavame odhad $F=E-2-V \geq \frac 1 2 V-2$, preto $F \geq \frac V 2 -2$.
+
+Týmto sme ukázali, že pre ľubovoľný nedegenerovaný polyéder v troch rozmeroch sú jeho H--reprezentácia a V reprezentácia asymptoticky rovnako veľké, až na lineárny faktor $2$.
+Preto v rámci porovnania metód by nie je podstatné, či najprv náhodne vygenerujeme polyéder v H--reprezentácii, ktorú prevedieme do V--reprezentácie alebo či najprv vygenerujeme V--reprezentáciu, ktorú prevedieme do H--reprezentácie. V obidvoch prípadoch dostaneme asymptoticky rovnako veľké reprezentácie.
+
+Pre vyšší počet rozmerov sa nám nič podobné nepodarilo ukázať. Navyše, testovanie generátoru polyédrov (viď \ref{generator-polyedrov}) v praxi nasvedčuje, že podiel $\frac F V$ rastie exponenciálne s rastúcim počtom rozmerov. Preto možno predpokladať, že polynomiálny odhad počtu vrcholov polyédra od jeho počtu stien a rozmeru priestoru nemusí existovať.\\
+
+Ak máme danú aj stenovú aj vrcholovú reprezentáciu polyédra, ktoré nie sú nutne minimálne (vzhľadom na počet stien v H--reprezentácii a počet vrcholov vo V--reprezentácii), môžeme jednoducho dané reprezentácie minimalizovať odstránením prebytočných nadrovín a vrcholov. Z H--reprezentácie možno odstrániť tie nadroviny, ktoré neprechádzajú aspoň tromi vrcholmi V--reprezentácie. Z V--reprezentácie možno odstrániť tie vrcholy, ktoré neležia na aspoň troch nadrovinách z H--reprezentácie. Takto získané reprezentácie sú s pravdepodobnosťou $1$ minimálne. Všimnime si, že pravdepodobnosť, že náhodná nadrovina, ktorá nie je stena polyédru, prechádza aspoň jedným vrcholom V--reprezentácie je $0$. Preto v rámci implementácie budeme odstráňovať nadroviny, ktoré neprechádzajú žiadnym vrcholom V--reprezentácie.
+Overiť, či bod $x$ leží na nadrovine danej vektorom $a$ a konštantou $c$ je triviálne, stačí overiť rovnosť $a^Tx=c$.
+
+\subsubsection{Generovanie polyédru v H--reprezentácii}
+
+V rámci tejto práce je použitý mierne upravený algoritmus na generovanie náhodných polyédrov popísaný v \cite{random_may}. Výstupom algoritmu je polyéder v H--reprezentácii, taký, že každý bod z jednotkovej hyperkocky má rovnakú pravdepodobnosť byť vnútri. 
+
+Algoritmus popísaný v \cite{random_may} využíva prístup Monte Carlo, funguje nasledovne: Najprv náhodne zvolí $m$ nadrovín $p_1, \dots, p_m$, tie rozdeľujú priestor na niekoľko nie nutne ohraničených oblastí.
+Následne rovnomerne náhodne vygeneruje bod $c$ v jednotkovej hyperkocke. Ako polyéder $P_c$ zvolí algoritmus oblasť vymedzenú nadrovinami $p_i$, v ktorej leží $c$. Nadrovina $p_i$ je reprezentovaná $i$--tým riadkom matice $A$ a $i$--tým prvkom vektoru $b$. Polpriestor vymedzený $p_i$ je množina bodov $x$ spĺňajúca nerovnosť $(Ax-b)_i \geq 0$. Ak po vygenerovaní $A$, $b$, $c$ neleží $c$ v priestore vymedzenom $p_i$ (platí $(Ax-b)_i \leq 0$), tak algoritmus otočí $i$--tú nerovnosť na $\leq$ prenásobením $i$--teho riadku $A$ a $i$--teho prvku $b$ hodnotou $-1$. Potom bude zrejme platiť $(Ax-b)_i \geq 0$.
+
+Na záver algoritmus overí, či je vygenerovaný polyéder $P_c$ ohraničený vopred zvolenou hyperkockou. Ak áno, tak vráti $P_c$. Ak nie je, tak daný polyéder zahodí a generuje znovu.
+
+\begin{algorithm}[H]
+	\caption{Generátor náhodných polyédrov \cite{random_may}}
+	\label{generator-polyedrov}
+	\begin{algorithmic}[1]
+		% \State Náhodne vyber bez návratu $n$ z $m+2n$ indexov obmedzení $i_1, i_2, \dots, i_n$
+		% \State Nastav $B=[p^{i_1}, p^{i_2}, \dots, p^{i_n}]^T$, zrejme $B^{-1}$ existuje s pravdepodobnosťou 1
+		% \State Nastav $V=B^{-1}[\Vert p^{i_1}\Vert ^2, \dots, \Vert p^{i_n}\Vert ^2]^T$
+		% \State Náhodne zvoľ $c \in [-1,1]^n$
+		% \State Nastav $y=c^TB^{-1}$, zvoľ nerovnosti $P_c$ nasledovne:
+		% \For {$i=0,1,\dots,n$}
+		% 	\If {$y_i>0$}
+		% 		\State Nastav $i$--tu nerovnosť na $\ge$
+		% 	\Else
+		% 		\State Nastav $i$--tu nerovnosť na $\le$
+		% 	\EndIf
+		% \EndFor
+		% \If {$P_c$ nie je celý v hyperkocke}
+		% 	\State Zamietni polyéder $P_c$, vráť sa na $1$
+		% \Else
+		% 	\State Odstráň obmedzenia hyperkocky, vráť $P_c$
+		% \EndIf
+		\State Vygeneruj prvky matice $A$ z nezávislých $N(0,1)$
+		\State Vygeneruj prvky vektoru $b$ z nezávislých $N(0,1)$
+		\State Vygeneruj bod $c$ v jednotkovej hyperkocke
+
+		\State Nastav jednotlivé nerovnosti na $\geq$ alebo $\leq$ tak, aby $c$ spĺňal $Ac\geq b$.
+		\State Nastav $y=Ac-b$
+		\For {$i=0,1,\dots,n$}
+			\If {$y_i>0$}
+				\State Nastav $i$--tu nerovnosť na $\ge$
+			\Else
+				\State Nastav $i$--tu nerovnosť na $\le$
+			\EndIf
+		\EndFor
+		\If {$P_c$ nie je celý v hyperkocke}
+			\State Zamietni polyéder $P_c$, vráť sa na $1$
+		\Else
+			\State Odstráň obmedzenia hyperkocky, vráť $P_c$
+		\EndIf
+	\end{algorithmic}
+\end{algorithm}
+
+Všimnime si, že $c$ leží v polyédri, teda polyéder je neprázdny. Navyše, bod $c$ je vygerovaný z rovnomerného rozdelenia na prieniku polyédra a jednotkovej hyperkocky. Tento bod použijeme na inicializáciu Hit--and--Run generátora a Gibbsovho generátora (MVEE metóda inicializačný bod nepotrebuje).\\
+
+Pri takomto generovaní v rámci $P_c$ môžeme získať aj nadroviny $p_i$, ktoré neobsahujú žiadnu stenu polyédra. Tieto nadroviny sú zrejme nadbytočné, preto ich môžeme odtiaľ odstrániť postupom popísaným vyššie.\\
+
+Prvky matice $A$ a vektora $b$ boli generované z nezávislých normálnych rozdelení $N(0,1)$. Na získanie V--reprezentácie z H--reprezentácie použili knižničné funkcie knižníc Polyhedra a CDDLib (v jazyku Julia). Nakoľko daný prevod bol pre rozmery $d \geq 10$ príliš pomalý, obmedzili sme sa na rozmery $d <10$.
+
+Na overenie, či je polyéder ohraničený v $k$--tom rozmere bolo použité lineárne programovanie s maximalizačným (a minimalizačným) cieľom $x_k$ (maximalizuje/minimalizuje sa $k$--tá súradnica $x$) pre body $x$ splňujúce $Ax \geq b$. V rámci implementácie boli použité knižničné funkcie knižníc Convex a SCS (v jazyku Julia).\\
+
+V rámci generovania polyédrov trvalo príliš dlho, kým sme vygenerovali polyéder ohraničený jednotkovou hyperkockou. Problémom bolo, že bolo potrebné zahodiť príliš veľa ohraničených polyédrov, ktoré neležali celé v jednotkovej hyperkocke. Preto sme kvôli zrýchleniu programu namiesto overenia, či je polyéder ohraničený jednotkovou hyperkockou (riadok $11$ algoritmu) overili iba, či je polyéder ohraničený.
+Po tejto zmene náš generátor polyédrov taktiež vracia ohraničené polyédre, ktoré nie sú celé v jednotkovej hyperkocke. \\
+

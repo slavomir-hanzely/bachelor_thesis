@@ -1,0 +1,33 @@
+\chapter*{Zdrojový kód najrýchlejšieho generátora}
+\addcontentsline{toc}{chapter}{Zdrojový kód najrýchlejšieho generátora}
+\markboth{Zdrojový kód najrýchlejšieho generátora}{Zdrojový kód najrýchlejšieho generátora}
+
+Najrýchlejší generátor bol podľa výsledkov nášho testovania Hit--and--Run generátor, jeho zdrojový kód v jazyku Julia je nasledovný:
+\begin{lstlisting}[language=Julia]
+# Hit-and-Run generator
+burn_in=100
+w=zeros(size(A,1))
+x=deepcopy(x0)
+for i=(1-burn_in):no_generated_points
+    D = generate_on_sphere(size(A,2))
+    for j=1:size(A,1)
+        w[j]=(A[j,:]'*x-b[j])/(A[j,:]'*D)
+    end
+    w_neg = filter(y->(y<-eps), w)
+    lb=ub=0
+    if length(w_neg)>0
+        lb = maximum(w_neg)
+    end
+    w_pos = filter(y->(y>eps), w)
+    if length(w_pos)>0
+        ub = minimum(w_pos)
+    end
+    dist=rand(Uniform(lb,ub))
+    x -= dist*D
+    if i>0
+        X[i,:] = x
+    end
+end
+X = X[shuffle(1:end), :]
+return X
+\end{lstlisting}

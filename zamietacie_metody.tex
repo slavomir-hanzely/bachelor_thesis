@@ -1,0 +1,55 @@
+\section{Zamietacie metódy}
+
+Zamietacie metódy nám poskytujú ďalší zo spôsobov rovnomerného generovania bodov na určitej množine.
+Myšlienka za nimi je nasledovná: Označme si $S$ množinu, na ktorej chceme rovnomerne náhodne generovať prvky. Predpokladajme, že nevieme priamo rovnomerne generovať body na $S$ ($S$ je veľarozmerná alebo komplikovane zadaná), no vieme rovnomerne generovať na množine $T$, $S \subset T$.
+
+Náš generátor $G_T$ bude pracovať nasledovne:
+
+\begin{algorithm}[H]
+	\caption{Zamietacia metóda}
+	\label{zamietanie:basic}
+	\begin{algorithmic}[1]
+		\For {$i=1,\dots,N$}
+			\Repeat
+			\State Vygeneruj bod $\mathbf x^{(i)} \in T$ rovnomerne náhodne
+			\Until {$\mathbf x^{(i)} \in S$}
+		\EndFor
+		\State Vráť ${\mathbf x^{(1)},\mathbf x^{(2)},\dots,\mathbf x^{(N)}}$
+	\end{algorithmic}
+\end{algorithm}
+Generátor $G_T$ vygeneruje bod $\mathbf x$ na množine $T$ rovnomerne náhodne, ak je ten bod aj z $S$, tak ho vráti ako výstup, inak vygeneruje nový bod $\mathbf x \in T$. Všimnime si, že generátor $G_T$ je závislý iba od $T$ a že generuje body na $S \cap T=S$ rovnomerne náhodne.
+
+Označme si $\lambda(M)$ objem množiny $M$. Očakávaná rýchlosť generovania závisí od toho, koľkokrát $G_T$ vygeneruje bod z $T \setminus S$. Z rovnomernosti $G_T$ je tá pravdepodobnosť rovná $\frac{\lambda(T \setminus S)}{\lambda(T)} = 1-\frac{\lambda(S)}{\lambda(T)}$. Označme si $p_k$ pravdepodobnosť, že $G_T$ vygeneruje bod z $S$ na $k$--ty pokus, t.j. najprv $k-1$ krát vygeneruje bod z $T \setminus S$ a potom vygeruje bod z $S$. Platí $p_k= (1-\frac{\lambda(S)}{\lambda(T)})^{k-1}\frac{\lambda(S)}{\lambda(T)}$, preto $p_k$ zodpovedá geometrickému rozdeleniu pravdepodobnosti. Očakávý počet generovaní $G_T$ je $$E(G_T)=\sum^{\infty}_{k=0}kp_k=\frac{\lambda(S)}{\lambda(T)} \sum^{\infty}_{k=0}k(1-\frac{\lambda(S)}{\lambda(T)})^{k-1}=\frac{\lambda(S)}{\lambda(T)} \frac{1}{((1-\frac{\lambda(S)}{\lambda(T)})-1)^2} = \frac{\lambda(T)}{\lambda(S)}.$$
+
+Táto metóda generovania je vhodná, ak je $\frac{\lambda(T)}{\lambda(S)}$ dostatočne malé, t.j. ak je obal $T$ relatíve malý oproti polyédru $S$. Ak je $\frac{\lambda(T)}{\lambda(S)} \sim \infty$, tak je táto metóda nepoužiteľná.\\
+
+Navyše, ak poznáme objem $T$, tak táto metóda nám ako vedľajší produkt poskytne aj štatistické intervaly spoľahlivosti $I_S$ pre objem $S$. Totiž $\frac{\lambda(S)}{\lambda(T)}$ je presne parameter binomického rozdelenia náhodnej premennej $S$. Preto možno odhadnúť objem $S$ ako $\lambda(S)=\lambda(T)I_S$.
+
+\subsection{Použitie na generovanie bodu vnútri polyédru}
+
+Zamyslime sa nad tým, ako by sme vedeli použiť túto metódu na generovanie bodu vnútri polyédru. Ako množinu možných $T$, $S \subset T$, môžeme použiť najmenší kváder s hranami rovnobežnými s osami sústavy. Vypočítať takýto kváder je ľahké, stačí nám to spraviť raz pred (začatím generovania) pomocou lineárneho programovania.
+
+Žiaľ, pre takúto množinu $T$ môže byť podiel $\frac{\lambda(T)}{\lambda(S)}$ ľubovoľne veľký. Ako príklad na takú množinu $S$ uveďme kváder s obsahom $k$, ktorý ``leží pozdĺž diagonály'' kocky $[0,1]^n$ a dotýka sa každej steny kocky $[0,1]^n$. Zrejme najmenšia množina $T$ (kváder s hranami rovnobežnými s osami sústavy) obaľujúca $S$ je kocka $[0,1]^n$, ktorá má obsah $1$. Platí $\frac{\lambda(T)}{\lambda(S)}=\frac{1}{k}$. Keďže vieme nájsť polyéder (napr. kváder) taký, že sa dotýka stien kocky $[0,1]^n$ a $k$ je ľubovoľne malé, tak očakávaná dĺžka generovania touto metódou (pre danú množinu $T$) môže byť ľubovovoľne veľká.\\
+
+Ako ďalšia možná množina $T$ prichádza do úvahy elipsoid obaľujúci polyéder. Keďže chceme, aby bol podiel $\frac{\lambda(T_{MVEE})}{\lambda(S)}$ čo najmenší, budeme skúmať elipsoid s najmenším obsahom obaľujúci polyéder --- Minumum Volume Enclosing Elipsoid (ďalej MVEE). Môžeme si všimnúť, že MVEE elipsoid obsahuje veľa informácie o tom, ako vyzerá polyéder. Keďže elipsoid je jednotková guľa zobrazená lineárnou transformáciou, možno generovať body vnútri elipsoidu ako obrazy bodov vygenerovaných vnútri jednotkovej gule v lineárnej trasformácii. Nájsť daný elipsoid vieme nájsť rýchlo pomocou REX algoritmu, ktorému je venovaná ďalšia kapitola.
+
+Pre túto metódu vieme dokonca odhadnúť rýchlosť generovania. Na odhadnutie veľkosti $\lambda(T_{MVEE})$ možno využiť fakt, že ku každému konvexnému telesu $C$ existuje (unikátny) vpísaný elipsoid s najväčším objemom (takzvaný Johnov elipsoid). Podľa \cite{ellipsoids_ball} Johnov elipsoid pre konvexné $d$--rozmerné teleso $C$ (v našom prípade polyéder $S$) zobrazený rovnoľahlosťou so stredom s centre elipsoidu a koeficientom $d$ obsahuje celé teleso $C$. Zobrazením danou rovnoľahlosťou sa objem $d$--rozmerného telesa zväčší $d^d$--krát. Tým pádom je objem MVEE nanajvýš $d^d$--krát väčší ako objem Johnovho elipsoidu, preto je nanajvýš $d^d$--krát väčší ako objem telesa $C$.
+$$\frac {\lambda(T_{MVEE})}{\lambda(S)} \leq \frac{d^d\lambda(T_{JE})}{\lambda(S)} < \frac{d^d\lambda(S)}{\lambda(S)}=d^d,$$ kde $T_{JE}$ je Johnov elipsoid prislúchajúci ku polyédru $S$. Očakávaný počet generovaní pomocou nadmnožiny $T_{MVEE}$ je teda najviac $d^d$ (kde $d$ je počet rozmerov).\\
+
+Poďme sa zamyslieť nad inými množinami $T$. Keďže najjednoduchšia množina $T$, v ktorej vieme generovať, je kváder, ako ďalšiu uvažovanú množinu $T$ možno zvážiť najmenší kváder obaľujúci MVEE elipsoid (bez podmienky, že jeho hrany sú rovnobežné s osami sústavy). Zrejme osi kvádra budú zhodné s osami MVEE elipsoidu. Označme si daný kváder $T_K$ a metódu generovania založenú na $T_K$ \textit{kvádrova metóda}. Pre $T_K$ platí, že je obrazom kocky $[0,1]^n$ v zobrazení, ktoré zobrazí jednotkovú guľu na MVEE elipsoid.
+
+Avšak, keďže tento kváder $T_K$ nie je rovnobežný s osami sústavy, ako prirodzený spôsob rovnomerného generovania vnútri tohoto kvádra možno použiť generovanie vnútri jednotkovej hyperkocky s osami rovnobežnými s osami sústavy a následne zobrazené lineárnou transformáciou.\\
+
+Tento prístup je analogický prístupu s MVEE elipsoidom. Dokonca, lineárne zobrazenia pri $T_K$ a $T_{MVEE}$ sú rovnaké. Rozdiel je jedine v tom, že pri $T_{MVEE}$ rovnomerne generujeme na $d$--rozmernej jednotkovej guli (kde $d$ je dimenzia priestoru), čo následne zobrazujeme lineárnym zobrazením. Pri $T_K$ rovnomerne generujeme na $d$--rozmernej jednotkovej kocke (obaľujúcej $d$--rozmernú jednotkovú guľu), čo zobrazujeme lineárnym zobrazením na kváder $T_K$ obaľujúci MVEE elipsoid.
+
+Ukážme si, že pri dostatočne rýchlom rovnomernom generovaní bodov v guli kvádrova metóda nie je rýchlejšia ako MVEE metóda. Porovnajme očakávaný čas týchto prístupov. Označme si $t_f$ očakávaný čas výpočtu lineárneho zobrazenia, $T_G$ $d$--rozmernú jednotkovú guľu a $t_G$ očakávaný čas vygenerovania bodu v nej, $T_K$ $d$--rozmernú jednotkovú kocku a $t_K$ očakávané čas vygenerovanie bodu v nej. Nakoniec si označme $T_P$ množinu bodov hľadaného polyédra.
+
+Očakávaný čas na vygenerovanie bodu pomocou zamietacej metódy pomocou MVEE je $\frac{\lambda(T_G)}{\lambda(T_P)}t_ft_G=\frac{t_f}{\lambda(T_P)}t_G\lambda(T_G)$, očakávný čas na vygenerovanie pomocou kvádrovej metódy je $\frac{\lambda(T_K)}{\lambda(T_P)}t_ft_K=\frac{t_f}{\lambda(T_P)}t_K\lambda(T_K)$.
+Podiel očakávaných časov je $$\frac{\text{očakávaný čas kvádrovej metódy}}{\text{očakávaný čas MVEE metódy}}=\frac{\frac{\lambda(T_K)}{\lambda(T_P)}t_ft_K}{\frac{\lambda(T_G)}{\lambda(T_P)}t_ft_G}=\frac{\lambda(T_K)t_K}{\lambda(T_G)t_G}.$$ Ak pri MVEE metóde použijeme na rovnomerné generovanie bodov vnútri gule s očakávaným časom $t_G \le \frac{\lambda(T_K)t_K}{\lambda(T_G)}$, tak podiel očakávaných trvaní metód bude menší--rovný ako jedna, teda kvádrová metóda bude pomalšia.
+
+Všimnime si, že zamietacia metóda na generovanie bodov v $T_G$ pomocou nadmnožiny $T_K$ má očakávaný počet generovaní rovný $\frac{\lambda(T_K)t_K}{\lambda(T_G)}$, preto očakávané trvanie vygenerovania bodu pomocou nej je $\frac{\lambda(T_K)t_K}{\lambda(T_G)}$.
+Týmto sme ukázali, že ak by sme generovali body v polyédri pomocou MVEE metódy, pričom rovnomerné generovanie bodov v $T_G$ by sme realizovali pomocou zamietacej metódy s nadmnožinou $T_K$, dostali by sme presne rýchlosť kvádrovej metódy. Kedže existujú aj rýchlejšie metódy rovnomerného generovania vnútri gule, kvádrová metóda je pomalšia ako MVEE metóda. Ďalej sa ňou nebudeme zaoberať.
+
+Treba podotknúť, že zamietacia metóda na generovanie bodov v $T_G$ pomocou $T_K$ v $d$ rozmeroch má zásadný problém, že pomer objemov $\frac{\lambda(T_K)}{\lambda(T_G)}$ je už pre malé $d$ obrovský. Totiž v $d$--rozmeroch je $\lambda(T_K)=2^d$ a $\lambda(T_G)=\Gamma(\frac d 2 + 1)$ (kde $\Gamma$ je Eulerova Gamma funkcia), preto 
+$$\frac{\lambda(T_K)}{\lambda(T_G)}=\frac{2^d}{\Gamma(\frac d 2 + 1)} \sim \frac{2^d}{\frac{d+1}{2}!}\sim \frac{2^{d}}{\sqrt{(d+1)\pi}(\frac{d+1}{2e})^{(d+1)/2}}=\frac{2^d (2e)^{(d+1)/2}}{\sqrt{(d+1)\pi}(d+1)^{(d+1)/2}}.$$
+V čítateli je $c^d$ (pre vhodnú konštantu $c$), menovateľ je rádovo $d^{d/2}$, čo rastie so zväčšujúcou sa dimenziou priestoru asymptoticky oveľa rýchlejšie ako čítateľ.

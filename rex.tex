@@ -1,0 +1,52 @@
+\section {Radomized Exchange Algoritmus}
+
+V tejto podkapitole popíšeme randomized exchange algoritmus (REX) predstavený v \cite{rex_harman}. Dá sa na neho pozerať ako na špeciálny prípad SAM algoritmu. Ako už bolo spomenuté, REX algoritmus kombinuje kroky VEM algoritmu a pažravých (angl. ``greedy''), ``dávkových'' (angl. ``batch'') algoritmov. Podľa \cite{rex_harman} je pre niektoré typy problémov REX algoritmus v praxi rýchlejší ako všetky s ním porovnané state--of--the--art algoritmy na riešenie problému optimálneho návrhu experimentov. Na uvedenie predstavy o rýchlosti REX algoritmu, medzi známe algoritmy na riešenie problému optimálneho riadenia patria algoritmy konvergujúce v lineárnom čase (napr. Khachiyanov algoritmus \cite{complexity_khachiyan}). Konvergencia v lineárnom čase znamená, že do vzialenosti $\epsilon$ od optima dôjdu v čase $\mathcal{O}(log(\frac{1}{\epsilon}))$ \\
+
+Prejdime k samotnému algoritmu. Nech $\mathbf w$ je regulárny návrh, nech $\mathbf {d(w)}$ je $n$--rozmerný vektor s komponentami $d_x(\mathbf w)$. Hlavná myšlienka REX algoritmu je, počnúc inicializovaným regulárnym návrhom $\mathbf w$, iteratívne vyberať niekoľko bodov aktuálneho návrhu (ich počet sa bude líšiť v rámci iterácii) a v náhodnom poradí vykonať optimálnu výmenu váh medzi vybranými bodmi. Optimálna výmena váh je analogická LBE kroku VEM algoritmu. Voľba nodov závisí od $\mathbf{d(w)}$. Kroky REX algoritmu budú nasledovné:
+
+\begin{itemize}
+	\item \textbf{Krok LBE.} Pri danom návrhu $\mathbf w$, vypočítaj $\mathbf {d(w)}$ a urob LBE krok daný nasledovne: $$\alpha^* \leftarrow \argmax_{\alpha \in [-w_l, w_k] } \{ \Phi_D(\mathbf M(\mathbf w+\alpha \mathbf e_l -\alpha \mathbf e_k)) \},$$ kde 
+	$k \in \argmin_{u \in \text{supp}(\mathbf w)} \{ d_u(\mathbf w)\}, l \in \argmax_{v \in \mathfrak X} \{ d_v(\mathbf w)\}$. Optimálny krok $\alpha^*_{k,l}(\mathbf w)$ nazvime \textit{nulujúci}, ak je rovný buď $-w_l$ alebo $w_k$. To zodpovedá prípadu, keď sme sa optimálnym krokom pohli do niektorého z bodov $w_l$ alebo $w_k$.
+
+	\item \textbf{Výber aktívneho podpriestoru.} Podpriestor $S \subset \mathfrak X$, v ktorom sa pohneme bude zvolený ako zjednotenie dvoch množín. Jednou vybranou pažravým procesom ($S_\text{greedy}$) a druhou ako nosič návrhu $\mathbf w$ ($S_\text{support}$).
+	\begin{itemize}
+		\item \textbf{Pažravá množina.} Nech $L=\min (\gamma m, n)$ je počet návrhov, ktoré vyberieme. Potom zvoľ $S_\text{greedy}$ ako $$S_\text{greedy} = \{l_1^*, \dots, l_L^* \} \subset \mathfrak X,$$ kde $l_i^*$ je najväčšia zložka vektoru $\mathbf d(\mathbf w)$. Platí $L=|S_\text{greedy}|$.
+		\item \textbf{Nosič.} Nastav $$S_\text{support}=\text{supp}(\mathbf w).$$ Označme $K$ veľkosť nosiča, $K= |\text{supp}(\mathbf w)|=|S_\text{support}|$.
+		\item \textbf{Aktívny podpriestor.} Aktívny podpriestor $S$ je definovaný ako $$S=S_\text{greedy} \cup S_\text{support}.$$ Váhy návrhu $\mathbf w$ mimo aktívneho podpriestoru nebudú upravované v tejto iterácii.
+	\end{itemize}
+
+	\item \textbf{Krok v aktívnom podpriestore.} Teraz vykonáme krok, v ktorom aktualizujeme hodnoty $w_v$ pre $v \in S$. Body $w_v$ návrhu $\mathbf w$ pre $v \not \in S$ ostanú nezmenené.
+	\begin{itemize}
+		\item \textbf{Tvorba párov.} Nech $(k_1, \dots, k_K)$ je uniformne náhodná premutácia $S_\text{support}$ a nech $(l_1, \dots, l_L)$ je uniformne náhodná permutácia $S_\text{greedy}$. Potom postupnosť aktívnych dvojíc návrhov, na ktorých budú vykonané optimálne výmeny váh je $$ (k_1,l_1), (k_2, l_1), \dots, (k_L, l_1), (k_1, l_2) (k_2,l_L), \dots, (k_K, l_L). $$
+		\item \textbf{Aktualizácia.} Vykonaj postupne všetky $\Phi_D$--optimálne LBE kroky medzi návrhmi z $ (k_1,l_1), \dots, (k_K, l_L)$ s prisluchajúcimi aktualizáciami $\mathbf w$ a $\mathbf {M(w)}$.
+	\end{itemize}
+\end{itemize}
+
+REX algoritmus vyzerá nasledovne:
+
+\begin{algorithm}[H]
+	\caption{REX algoritmus \cite{rex_harman}}
+	\label{rex}
+	\begin{algorithmic}[1]
+		\State Zvoľ regulárny $n$--rozmerný návrh $\mathbf w$
+		\While {$\mathbf w$ nespĺňa podmienky zastavenia}
+			\State Urob LBE krok vo $\mathbf w$
+			\State Nech $k$ je vektor zodpovedajúci náhodnej permutácii prvkov supp$(\mathbf w)$
+			\State Nech $l$ je vektor zodpovedajúci náhodnej permutácii $L=\min(\gamma m, n)$ indexov prvkov $\mathbf {d(w)}$
+			\For {$l=1 \dots L$}
+				\For {$l=1 \dots K$}
+					\State $\alpha^* \leftarrow \argmax_{\alpha \in [-w_l, w_k]} \{ \Phi_D(\mathbf M(\mathbf w+\alpha \mathbf e_l -\alpha \mathbf e_k))\}$
+					\If {LBE krok bol nulujúci alebo $\alpha^* = -w_l$ alebo $\alpha^* = w_k$ }
+						\State $w_k \leftarrow w_k - \alpha^*$
+						\State $w_l \leftarrow w_l + \alpha^*$
+					\EndIf
+				\EndFor
+			\EndFor
+		\EndWhile
+		\State Vráť $\mathbf w$
+	\end{algorithmic}
+\end{algorithm}
+
+V rámci jednotlivých krokov REX algoritmu, počas LBE krokov je na výpočet ďalšieho bodu potrebné invertovať maticu $\mathbf{M(w)}$. Ako potenciálny problém by mohlo nastať, že v rámci behu programu sa algoritmus bude nachádzať v bode $\mathbf w^{(q)}$ takom, že matica  $\mathbf{M(w}^{(q)})$ bude singulárna a teda neeexistuje inverzná matica $\mathbf{M(w}^{(q)})^{-1}$. To však nastať nemôže, ak pri inicializácii bude zvolený počiatočný návrh $\mathbf w^{(0)}$ tak, že matica $\mathbf{M(w}^{(0)})$ bude regulárna. Kedže $\Phi_D(\mathbf{w})=(\det(\mathbf{M})^{1/m})$ a postupnosť dosiahnutých návrhov $\mathbf w^{(0)}, \mathbf w^{(1)}, \dots$ spĺňa $ \Phi_D(\mathbf M(\mathbf w^{(0)})) \leq \Phi_D(\mathbf M(\mathbf w^{(1)})) \leq \Phi_D(\mathbf M(\mathbf w^{(2)})) \leq \dots$, postupnosť determinantov matíc $\mathbf M(\mathbf w^{(k)})$ je teda neklesajúca a preto sa regulárnosť matíc $\mathbf M(\mathbf w^{(k)})$ zachová.\\
+
+Poznámka: popísali sme REX algoritmus vzhľadom na kritérium $D$--optimality. Podľa \cite{rex_harman} REX algoritmus funguje aj vzhľadom na $A$--optimalitu pri nahradení funkcie $d_x$ funkciou $a_x$ definovanou ako $$a_x(\mathbf w)=\mathbf {f'}(x)\mathbf M^{-2}(\mathbf w)\mathbf f(x), x \in \mathfrak X.$$ a nahradení funkcie $\Phi_D$ funkciou $\Phi_A$ definovanou ako $$\Phi_A(\mathbf{w})=(\text{tr}(\mathbf M)^{-1})^{-1}.$$ Pri tejto verzii problému však článok \cite{rex_harman} nedokazuje konvergenciu algoritmu. Pre účely tejto práce to však nie je podstatné.
